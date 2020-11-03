@@ -21,7 +21,8 @@ BULLET_SPEED = 4
 
 ENEMY_WIDTH = 8
 ENEMY_HEIGHT = 8
-ENEMY_SPEED = 1.5
+ENEMY_SPEED = 1
+ENEMY_TYPE = [{"x":0,"y":8},{"x":8,"y":0},{"x":8,"y":8}]
 
 BLAST_START_RADIUS = 1
 BLAST_END_RADIUS = 8
@@ -139,6 +140,12 @@ class Enemy:
         self.dir = 1
         self.alive = True
         self.offset = int(random() * 60)
+        if self.offset % 2 == 0:
+            self.type = 0
+        elif self.offset % 3 == 0:
+            self.type = 1
+        else:
+            self.type = 2
 
         enemy_list.append(self)
 
@@ -156,7 +163,8 @@ class Enemy:
             self.alive = False
 
     def draw(self):
-        pyxel.blt(self.x, self.y, 0, 8, 0, self.w * self.dir, self.h, 0)
+        enemy = ENEMY_TYPE[self.type]
+        pyxel.blt(self.x, self.y, 0, enemy["x"], enemy["y"], self.w * self.dir, self.h, 0)
 
 
 class Blast:
@@ -183,35 +191,37 @@ class App:
     def __init__(self):
         pyxel.init(120, 160, caption="Pyxel Shooter")
 
-        pyxel.image(0).set(
-            0,
-            0,
-            [
-                "00c00c00",
-                "0c7007c0",
-                "0c7007c0",
-                "c703b07c",
-                "77033077",
-                "785cc587",
-                "85c77c58",
-                "0c0880c0",
-            ],
-        )
+        pyxel.load("./shooter.pyxres")
 
-        pyxel.image(0).set(
-            8,
-            0,
-            [
-                "00088000",
-                "00ee1200",
-                "08e2b180",
-                "02882820",
-                "00222200",
-                "00012280",
-                "08208008",
-                "80008000",
-            ],
-        )
+        # pyxel.image(0).set(
+        #     0,
+        #     0,
+        #     [
+        #         "00c00c00",
+        #         "0c7007c0",
+        #         "0c7007c0",
+        #         "c703b07c",
+        #         "77033077",
+        #         "785cc587",
+        #         "85c77c58",
+        #         "0c0880c0",
+        #     ],
+        # )
+        #
+        # pyxel.image(0).set(
+        #     8,
+        #     0,
+        #     [
+        #         "00088000",
+        #         "00ee1200",
+        #         "08e2b180",
+        #         "02882820",
+        #         "00222200",
+        #         "00012280",
+        #         "08208008",
+        #         "80008000",
+        #     ],
+        # )
 
         pyxel.sound(0).set("a3a2c1a1", "p", "7", "s", 5)
         pyxel.sound(1).set("a3a2c2c2", "n", "7742", "s", 10)
@@ -241,7 +251,7 @@ class App:
             self.scene = SCENE_PLAY
 
     def update_play_scene(self):
-        if pyxel.frame_count % 6 == 0:
+        if pyxel.frame_count % 12 == 0:
             Enemy(random() * (pyxel.width - PLAYER_WIDTH), 0)
 
         for a in enemy_list:

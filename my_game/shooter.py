@@ -21,8 +21,16 @@ BULLET_SPEED = 4
 
 ENEMY_WIDTH = 8
 ENEMY_HEIGHT = 8
-ENEMY_SPEED = 1
-ENEMY_TYPE = [{"x":0,"y":8},{"x":8,"y":0},{"x":8,"y":8}]
+ENEMY_SPEED = 0.5
+ENEMY_TYPE = [
+    {"x": 0, "y": 8},
+    {"x": 8, "y": 0},
+    {"x": 8, "y": 8},
+    {"x": 16, "y": 0},
+    {"x": 24, "y": 0},
+    {"x": 16, "y": 8},
+    {"x": 24, "y": 8},
+]
 
 BLAST_START_RADIUS = 1
 BLAST_END_RADIUS = 8
@@ -32,7 +40,7 @@ BLAST_COLOR_OUT = 10
 enemy_list = []
 bullet_list = []
 blast_list = []
-
+score = 0
 
 def update_list(list):
     for elem in list:
@@ -140,24 +148,44 @@ class Enemy:
         self.dir = 1
         self.alive = True
         self.offset = int(random() * 60)
-        if self.offset % 2 == 0:
-            self.type = 0
-        elif self.offset % 3 == 0:
-            self.type = 1
+        if score > 300:
+            if self.offset % 2 == 0:
+                self.type = 3
+            elif self.offset % 3 == 0:
+                self.type = 4
+            elif self.offset % 5 == 0:
+                self.type = 5
+            elif self.offset % 7 == 0:
+                self.type = 6
+            else:
+                self.type = 2
         else:
-            self.type = 2
+            if self.offset % 2 == 0:
+                self.type = 0
+            elif self.offset % 3 == 0:
+                self.type = 1
+            else:
+                self.type = 2
 
+        if score > 500:
+            self.speed = ENEMY_SPEED * 4
+        elif score > 300:
+            self.speed = ENEMY_SPEED * 3
+        elif score > 100:
+            self.speed = ENEMY_SPEED * 2
+        else:
+            self.speed = ENEMY_SPEED
         enemy_list.append(self)
 
     def update(self):
         if (pyxel.frame_count + self.offset) % 60 < 30:
-            self.x += ENEMY_SPEED
+            self.x += self.speed
             self.dir = 1
         else:
-            self.x -= ENEMY_SPEED
+            self.x -= self.speed
             self.dir = -1
 
-        self.y += ENEMY_SPEED
+        self.y += self.speed
 
         if self.y > pyxel.height - 1:
             self.alive = False
@@ -190,44 +218,11 @@ class Blast:
 class App:
     def __init__(self):
         pyxel.init(120, 160, caption="Pyxel Shooter")
-
         pyxel.load("./shooter.pyxres")
-
-        # pyxel.image(0).set(
-        #     0,
-        #     0,
-        #     [
-        #         "00c00c00",
-        #         "0c7007c0",
-        #         "0c7007c0",
-        #         "c703b07c",
-        #         "77033077",
-        #         "785cc587",
-        #         "85c77c58",
-        #         "0c0880c0",
-        #     ],
-        # )
-        #
-        # pyxel.image(0).set(
-        #     8,
-        #     0,
-        #     [
-        #         "00088000",
-        #         "00ee1200",
-        #         "08e2b180",
-        #         "02882820",
-        #         "00222200",
-        #         "00012280",
-        #         "08208008",
-        #         "80008000",
-        #     ],
-        # )
-
         pyxel.sound(0).set("a3a2c1a1", "p", "7", "s", 5)
         pyxel.sound(1).set("a3a2c2c2", "n", "7742", "s", 10)
 
         self.scene = SCENE_TITLE
-        self.score = 0
         self.background = Background()
         self.player = Player(pyxel.width / 2, pyxel.height - 20)
 
@@ -251,7 +246,9 @@ class App:
             self.scene = SCENE_PLAY
 
     def update_play_scene(self):
-        if pyxel.frame_count % 12 == 0:
+        global score
+
+        if pyxel.frame_count % 18 == 0:
             Enemy(random() * (pyxel.width - PLAYER_WIDTH), 0)
 
         for a in enemy_list:
@@ -271,7 +268,10 @@ class App:
 
                     pyxel.play(1, 1)
 
-                    self.score += 10
+                    if a.type >= 5:
+                        score += 20
+                    else:
+                        score += 10
 
         for enemy in enemy_list:
             if (
@@ -304,6 +304,8 @@ class App:
         cleanup_list(blast_list)
 
     def update_gameover_scene(self):
+        global score
+
         update_list(bullet_list)
         update_list(enemy_list)
         update_list(blast_list)
@@ -316,13 +318,15 @@ class App:
             self.scene = SCENE_PLAY
             self.player.x = pyxel.width / 2
             self.player.y = pyxel.height - 20
-            self.score = 0
+            score = 0
 
             enemy_list.clear()
             bullet_list.clear()
             blast_list.clear()
 
     def draw(self):
+        global score
+
         pyxel.cls(0)
 
         self.background.draw()
@@ -334,7 +338,7 @@ class App:
         elif self.scene == SCENE_GAMEOVER:
             self.draw_gameover_scene()
 
-        pyxel.text(39, 4, "SCORE {:5}".format(self.score), 7)
+        pyxel.text(39, 4, "SCORE {:5}".format(score), 7)
 
     def draw_title_scene(self):
         pyxel.text(35, 66, "Pyxel Shooter", pyxel.frame_count % 16)
